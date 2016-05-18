@@ -1,12 +1,13 @@
 import qualified Data.Map as M
+import qualified Data.ByteString.Char8 as C
 import Data.Ord
 import Data.List (minimumBy)
 import System.Environment (getArgs)
 
-naiveCluster :: Int -> [String] -> [(String, [String])]
+naiveCluster :: Int -> [C.ByteString] -> [(C.ByteString, [C.ByteString])]
 naiveCluster maxDist xs = M.toList $ go xs M.empty
   where
-    go :: [String] -> Clusters String -> Clusters String
+    go :: [C.ByteString] -> Clusters C.ByteString -> Clusters C.ByteString
     go [] cs = cs
     go (x:xs) cs
       | dist3 x best <= maxDist = go xs (M.insert best (x : bestValues) cs)
@@ -16,13 +17,13 @@ naiveCluster maxDist xs = M.toList $ go xs M.empty
         bestValues = maybe [] id (M.lookup best cs)
 
 
-dist2 x y = go (words x) (words y)
+dist2 x y = go (C.words x) (C.words y)
  where
    go [] ys = length ys
    go xs [] = length xs
    go (x:xs) (y:ys) = (if x == y then 0 else 1) + go xs ys
 
-dist3 x y = dist2 (drop 87 x) (drop 87 y)
+dist3 x y = dist2 (C.drop 87 x) (C.drop 87 y)
 
 
 
@@ -39,8 +40,8 @@ bestCluster candidate distanceFrom clusters
 main = do
   (file:maxDist':_) <- getArgs
   let maxDist = read maxDist'
-  fileContents <- readFile file
-  mapM_ (putStrLn . pp) . (naiveCluster maxDist)  . lines $ fileContents
+  fileContents <- C.readFile file
+  mapM_ (C.putStrLn . pp) . (naiveCluster maxDist)  . C.lines $ fileContents
 
-pp :: (String, [String]) -> String
-pp (cand, neighs) = unlines $ (cand ++ " " ++ (show $ length neighs)) : (map ("  " ++) neighs)
+pp :: (C.ByteString, [C.ByteString]) -> C.ByteString
+pp (cand, neighs) = C.unlines $ (C.concat [cand, (C.pack " "), (C.pack . show $ length neighs)]) :  (map (\x -> C.append (C.pack "  ") x) neighs)
