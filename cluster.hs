@@ -4,6 +4,17 @@ import Data.Ord
 import Data.List (minimumBy)
 import System.Environment (getArgs)
 
+data Options = Options { trimStringsBy :: Int
+                       , maximumDistance :: Int
+                       , distanceFunction :: (C.ByteString -> C.ByteString -> Int)
+                       , inputFile :: String
+                       }
+
+defaultOptions = Options { trimStringsBy = 0
+                         , maximumDistance = 3
+                         , distanceFunction = dist2
+                         }
+
 naiveCluster :: Int -> (C.ByteString -> C.ByteString -> Int) -> [C.ByteString] -> [(C.ByteString, [C.ByteString])]
 naiveCluster maxDist dist xs = M.toList $ go xs M.empty
   where
