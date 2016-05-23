@@ -39,10 +39,6 @@ dist2 x y = go (C.words x) (C.words y)
 
 dist3 x y = dist2 (C.drop 87 x) (C.drop 87 y)
 
-
-
-
-
 type Clusters a = M.Map a [a]
 
 bestCluster :: a -> (a -> a -> Int) -> Clusters a -> a
@@ -100,8 +96,9 @@ cli = Options <$>
       where
         metricsR :: ReadM (C.ByteString -> C.ByteString -> Int)
         metricsR = eitherReader $ \s -> case s of
-                                          "levenshtein" -> undefined
                                           "jaccard" -> Right dist3
+                                          m@"levenshtein" -> Left $ m ++ " not implemented"
+                                          m@"levenshtein-damerau" -> Left $ m ++ " not implemented"
                                           m -> Left $ "unknown metric " ++ m
 
 
