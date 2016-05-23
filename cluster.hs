@@ -1,10 +1,14 @@
 import qualified Data.Map as M
 import qualified Data.ByteString.Char8 as C
 import Data.Ord
-import Data.List (minimumBy)
+import Data.Monoid (mconcat)
+import Data.List (genericLength, minimumBy, nub, transpose)
 import System.Environment (getArgs)
 
-data Options = Options { trimStringsBy :: Int
+import Control.Arrow ((&&&))
+import Control.Applicative
+import Options.Applicative
+
 data Options = Options { skipChars :: Int
                        , maximumDistance :: Int
                        , distanceFunction :: (C.ByteString -> C.ByteString -> Int)
