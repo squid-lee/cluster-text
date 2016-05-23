@@ -80,17 +80,17 @@ clusterEntropy xs = map (head &&& listEntropy) asWords
     asWords = transpose $ map C.words xs
 
 listEntropy :: (Eq a) => [a] -> Double
-listEntropy xs = let (_, _, e) = listEntropy' xs in e
+listEntropy xs = let (_, e) = listEntropy' xs in e
 
-listEntropy' :: (Eq a) => [a] -> ([Double], Double, Double)
-listEntropy' [] = ([], 0, 0)
-listEntropy' xs = (map px xs, qx, entropy)
+listEntropy' :: (Eq a) => [a] -> ([Double], Double)
+listEntropy' [] = ([], 0)
+listEntropy' xs = (map px xs, entropy)
   where
-    entropy = sum $ map singleEntropy xs
-    singleEntropy x = ((px x) * log2 ((px x) / qx))
+    entropy = sum $ map singleEntropy (nub xs)
+    singleEntropy x = -1 * ((px x) * log2 (px x))
 
     px x = (count x xs) / genericLength xs
-    qx = 1 / genericLength (nub xs) -- if xs were uniformly distributed
 
     log2 n = log n / log 2
+
     count x xs = genericLength $ filter (==x) xs
