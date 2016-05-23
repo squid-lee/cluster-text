@@ -5,6 +5,7 @@ import Data.List (minimumBy)
 import System.Environment (getArgs)
 
 data Options = Options { trimStringsBy :: Int
+data Options = Options { skipChars :: Int
                        , maximumDistance :: Int
                        , distanceFunction :: (C.ByteString -> C.ByteString -> Int)
                        , inputFile :: String
@@ -52,10 +53,11 @@ bestCluster candidate distanceFrom clusters
 
 
 main = do
-  (file:maxDist':_) <- getArgs
-  let maxDist = read maxDist'
-  fileContents <- C.readFile file
-  mapM_ (C.putStrLn . pp) . (naiveCluster maxDist dist3)  . C.lines $ fileContents
+  options <- execParser $ info (helper <*> cli) fullDesc
+
+  fileContents <- C.readFile (inputFile options)
+
+  mapM_ (C.putStrLn . ppEntropy) . (naiveCluster (maximumDistance options) (distanceFunction options))  . C.lines $ fileContents
 
 pp :: (C.ByteString, [C.ByteString]) -> C.ByteString
 pp (cand, neighs) = C.unlines $ (C.concat [cand, (C.pack " "), (C.pack . show $ length neighs)]) :  (map (\x -> C.append (C.pack "  ") x) neighs)
@@ -72,6 +74,42 @@ ppEntropy (cand, neighs) = C.unlines $ map C.unwords [words', entropies']
       where
         y' = C.pack . take 5 . show $ y
         difference = C.length x - C.length y'
+
+cli :: Parser Options
+cli = Options <$>
+        skipChars <*>
+        maxDist <*>
+        distFunc <*>
+        inputFile
+  where
+    skipChars = option auto $ mconcat [ long "skip-chars"
+                                      , short 's'
+                                      , help "ignore the first n chars when looking at similarity"
+                                      , value 0
+                                      ]
+
+    maxDist = option auto $ mconcat [ long "maximum-distance"
+                                    , short 'd'
+                                    , help "the maximum distance between two lines before they're considered distinct"
+                                    , value 3
+                                    ]
+    distFunc = option metricsR $ mconcat [ long "distance-metric"
+                                         , short 'm'
+                                         , help "The metric of distance between lines"
+                                         , value dist3
+                                         ]
+      where
+        metricsR :: ReadM (C.ByteString -> C.ByteString -> Int)
+        metricsR = eitherReader $ \s -> case s of
+                                          "levenshtein" -> undefined
+                                          "jaccard" -> Right dist3
+                                          m -> Left $ "unknown metric " ++ m
+
+
+    inputFile = strOption $ mconcat [ long "input-file"
+                                    , short 'f'
+                                    , help "File to cluster"
+                                    ]
 
 -- xs is a list of log lines
 clusterEntropy :: [C.ByteString] -> [(C.ByteString, Double)]
